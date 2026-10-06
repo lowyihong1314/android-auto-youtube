@@ -1,0 +1,13 @@
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+.kotlin/
+signing.properties
+*.keystore
+*.jks
+
+# Machine / server specific - kept locally, never published
+PRIVATE_NOTES.md
+deploy/nginx/

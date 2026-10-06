@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Car Video</string>
+
+    <string name="phone_blurb">在这里登录，车机端会自动是登录状态（两边共用同一份 Cookie）。</string>
+    <string name="status_signed_in">✅ 已登录 Google —— 车机端点「刷新」即可生效</string>
+    <string name="status_signed_out">⚠️ 未登录 —— 点「登录」用手机键盘登录 Google</string>
+
+    <string name="sign_in">登录</string>
+    <string name="youtube">YouTube</string>
+    <string name="sign_out">退出登录</string>
+    <string name="sign_out_confirm">会清除本 app 保存的所有 Cookie，车机端也会一起退出登录。</string>
+    <string name="signed_out">已清除登录状态</string>
+
+    <string name="action_keyboard">键盘</string>
+    <string name="action_back">返回</string>
+    <string name="action_home">主页</string>
+    <string name="action_reload">刷新</string>
+</resources>

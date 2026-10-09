@@ -12,11 +12,10 @@ import android.webkit.WebView
 import org.json.JSONObject
 
 /**
- * Shared WebView setup for both screens.
+ * WebView setup for the car screen.
  *
- * Both WebViews live in the same app process, so they share one CookieManager.
- * That is the whole login story: sign in on the phone, where a real keyboard
- * exists, and the car WebView is already signed in.
+ * Sign-in happens on the TV page itself: "使用手机登录" shows a code to enter at
+ * yt.be/activate on the phone. The session lives in this app's CookieManager.
  */
 object WebKit {
 
@@ -35,11 +34,11 @@ object WebKit {
             loadWithOverviewMode = true
             cacheMode = WebSettings.LOAD_DEFAULT
             mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
-            userAgentString = when {
-                Config.FORCE_USER_AGENT.isNotBlank() -> Config.FORCE_USER_AGENT
-                Config.SITE == Config.Site.TV -> Config.TV_USER_AGENT
-                else -> browserLikeUserAgent(userAgentString)
-            }
+            // WebView follows the phone's system font size (this phone: 1.3x) by zooming
+            // every font but not the layout: youtube.com/tv already scales itself to the
+            // screen, so its side bar text overflowed and overlapped the icons.
+            textZoom = 100
+            applyUserAgent(webView)
             setOffscreenPreRaster(offscreenPreRaster)
         }
         webView.setBackgroundColor(Color.BLACK)
@@ -49,17 +48,10 @@ object WebKit {
         }
     }
 
-    /**
-     * Google refuses to sign you in from an embedded WebView, and detects one by the
-     * "; wv" and "Version/x.y" tokens the system puts in the default user agent.
-     * Strip exactly those two and leave the rest alone, so the string stays current
-     * as the system WebView updates itself.
-     */
-    fun browserLikeUserAgent(default: String): String =
-        default.replace("; wv", "")
-            .replace(Regex("""\s*Version/\d+(\.\d+)*"""), "")
-            .replace(Regex("""\s{2,}"""), " ")
-            .trim()
+    /** The TV UA from [Settings]; youtube.com/tv bounces anything else to desktop. */
+    fun applyUserAgent(webView: WebView) {
+        webView.settings.userAgentString = Settings.userAgent
+    }
 
     /**
      * Pages hand off to other apps through intent://, vnd.youtube://, market:// and so on.
@@ -75,36 +67,16 @@ object WebKit {
         runCatching { CookieManager.getInstance().flush() }
     }
 
-    /** Best-effort: are we carrying a Google session cookie? */
-    fun isSignedIn(): Boolean {
-        val cookieManager = CookieManager.getInstance()
-        val jar = buildString {
-            append(cookieManager.getCookie("https://www.youtube.com").orEmpty()).append(';')
-            append(cookieManager.getCookie("https://m.youtube.com").orEmpty()).append(';')
-            append(cookieManager.getCookie("https://accounts.google.com").orEmpty())
-        }
-        return SESSION_COOKIES.any { jar.contains("$it=") }
-    }
-
-    fun signOut() {
-        CookieManager.getInstance().apply {
-            removeAllCookies(null)
-            removeSessionCookies(null)
-            flush()
-        }
-    }
-
-    private val SESSION_COOKIES = listOf("SAPISID", "__Secure-1PSID", "__Secure-3PSID", "SID")
-
-    // ------------------------------------------------------------------ keyboard bridge
-
     /**
-     * Injected once per page. Tapping a key must not move Android focus away from the
-     * WebView, but the page can still shuffle its own DOM focus, so we remember the
-     * last text field that was focused and fall back to it.
+     * Text typed on the phone lands in the car page's text field through this.
      *
-     * Values are written through the native setter because YouTube and the Google
-     * sign-in page are framework-rendered: a plain `el.value = x` is not seen.
+     * Finding "the" field is the hard part: opening the phone keyboard takes window
+     * focus away from the car page, which blurs its input, and a field the page
+     * autofocused before we were injected never fired focusin. So: the focused field,
+     * else the last one focused OR blurred, else the first visible text field.
+     *
+     * Values are written through the native setter because sign-in and search pages
+     * are framework-rendered: a plain `el.value = x` is not seen.
      */
     val KEYBOARD_BRIDGE_JS = """
         (function () {
@@ -113,14 +85,27 @@ object WebKit {
           function editable(el) {
             return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
           }
-          document.addEventListener('focusin', function (e) {
-            if (editable(e.target)) last = e.target;
-          }, true);
+          function remember(e) { if (editable(e.target)) last = e.target; }
+          document.addEventListener('focusin', remember, true);
+          document.addEventListener('focusout', remember, true);
+          if (editable(document.activeElement)) last = document.activeElement;
+          var FIELDS = 'input:not([type=hidden]):not([type=checkbox]):not([type=radio])' +
+            ':not([type=submit]):not([type=button]):not([disabled]),textarea';
+          function fields() {
+            // Really on screen: pages park hidden inputs (autofill traps, templates)
+            // that offsetParent alone does not rule out.
+            return Array.prototype.filter.call(document.querySelectorAll(FIELDS), function (el) {
+              var r = el.getBoundingClientRect(), st = getComputedStyle(el);
+              return r.width > 4 && r.height > 4 && st.visibility !== 'hidden' &&
+                st.display !== 'none' && parseFloat(st.opacity || '1') > 0.05 &&
+                el.getAttribute('aria-hidden') !== 'true';
+            });
+          }
           function target() {
             var a = document.activeElement;
             if (editable(a)) return a;
             if (last && document.contains(last)) return last;
-            return null;
+            return fields()[0] || null;
           }
           function setValue(el, value) {
             var proto = el.tagName === 'TEXTAREA'
@@ -131,6 +116,20 @@ object WebKit {
             el.dispatchEvent(new Event('change', { bubbles: true }));
           }
           window.__kb = {
+            set: function (text) {
+              var el = target(); if (!el) return 'no-target';
+              el.focus();
+              if (el.isContentEditable) { el.textContent = text; return 'ok'; }
+              setValue(el, text);
+              return 'ok';
+            },
+            next: function () {
+              var all = fields(), el = target();
+              var i = all.indexOf(el), n = all[i + 1] || all[0];
+              if (!n) return 'no-target';
+              n.focus(); last = n;
+              return 'ok';
+            },
             type: function (text) {
               var el = target(); if (!el) return 'no-target';
               el.focus();
@@ -172,6 +171,41 @@ object WebKit {
     const val BACKSPACE_JS = "window.__kb && window.__kb.back();"
     const val CLEAR_JS = "window.__kb && window.__kb.clear();"
     const val ENTER_JS = "window.__kb && window.__kb.enter();"
+    fun setJs(text: String) = "window.__kb && window.__kb.set(${JSONObject.quote(text)});"
+    const val NEXT_FIELD_JS = "window.__kb && window.__kb.next();"
+
+    /**
+     * On the watch page, pin the video to the whole screen with object-fit: contain.
+     *
+     * Left alone, youtube.com/tv zooms the video in and out by itself - cropped and
+     * enlarged with no captions, back to fit when a caption shows, smaller still for
+     * two lines - so the car picture kept "breathing". Re-checked every half second
+     * because the page is a single-page app: the hash changes, the document doesn't.
+     */
+    const val FIT_VIDEO_JS = """
+        (function () {
+          if (window.__cvfit) return;
+          window.__cvfit = 1;
+          var s = document.createElement('style');
+          document.head.appendChild(s);
+          var FIT = 'video{position:fixed!important;left:0!important;top:0!important;' +
+            'width:100vw!important;height:100vh!important;transform:none!important;' +
+            'object-fit:contain!important;}';
+          setInterval(function () {
+            var css = location.hash.indexOf('#/watch') === 0 ? FIT : '';
+            if (s.textContent !== css) s.textContent = css;
+          }, 500);
+        })();
+    """
+
+    /** Signs the car out of YouTube: every cookie this app holds is dropped. */
+    fun signOut() {
+        CookieManager.getInstance().apply {
+            removeAllCookies(null)
+            removeSessionCookies(null)
+            flush()
+        }
+    }
 }
 
 /**

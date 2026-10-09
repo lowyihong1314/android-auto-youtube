@@ -1,18 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Car Video</string>
+    <string name="version_line">版本 %1$s · YouTube TV 车机版</string>
 
-    <string name="phone_blurb">在这里登录，车机端会自动是登录状态（两边共用同一份 Cookie）。</string>
-    <string name="status_signed_in">✅ 已登录 Google —— 车机端点「刷新」即可生效</string>
-    <string name="status_signed_out">⚠️ 未登录 —— 点「登录」用手机键盘登录 Google</string>
+    <!-- car -->
+    <string name="section_car">车机</string>
+    <string name="car_on_screen">● 正在车机上显示</string>
+    <string name="car_background">● 已连接，车机当前在别的画面</string>
+    <string name="car_off">○ 车机端未运行</string>
+    <string name="car_off_detail">在车机上打开 Car Video 后，这里会显示分辨率和当前页面。</string>
+    <string name="car_detail">车机屏幕 %1$d×%2$d · %3$d dpi · %4$s Hz\n%5$s</string>
+    <string name="car_not_running">车机端没在运行</string>
+    <string name="action_rebuild">重建</string>
 
-    <string name="sign_in">登录</string>
-    <string name="youtube">YouTube</string>
+    <!-- phone remote -->
+    <string name="settings">设置</string>
+    <string name="search_hint">在车机上搜索 YouTube</string>
+    <string name="now_playing_channel">正在播放</string>
+
+    <!-- account -->
+    <string name="section_account">账号</string>
+    <string name="signin_help">在车机 TV 界面选「登录」→「使用手机登录」，车机会显示一个代码。点下面的按钮在手机上打开激活页，输入那个代码即可。</string>
+    <string name="open_activate">在手机上打开 yt.be/activate</string>
+    <string name="cookies">Cookie</string>
+    <string name="cookie_row">%1$s · %2$d 个</string>
+    <string name="cookie_none">%1$s · 无</string>
+    <string name="cookie_clear">清除</string>
+    <string name="cookie_export">导出</string>
+    <string name="cookie_import">导入</string>
     <string name="sign_out">退出登录</string>
-    <string name="sign_out_confirm">会清除本 app 保存的所有 Cookie，车机端也会一起退出登录。</string>
-    <string name="signed_out">已清除登录状态</string>
+    <string name="cookie_exported">已复制 Cookie 到剪贴板（含登录凭证，注意保管）</string>
+    <string name="cookie_imported">已导入 %1$d 个 Cookie</string>
+    <string name="cookie_import_failed">剪贴板里不是导出的 Cookie JSON</string>
+    <string name="cookie_import_title">从剪贴板导入 Cookie？</string>
+    <string name="cookie_import_message">会写入剪贴板里那份导出的 Cookie，已有的同名 Cookie 会被覆盖。</string>
+    <string name="cookie_cleared">已清除 %1$s 的 Cookie</string>
+    <string name="sign_out_confirm">会清除本 app 保存的所有 Cookie，车机上的 YouTube 会退出登录。</string>
+    <string name="signed_out">已退出登录</string>
 
-    <string name="action_keyboard">键盘</string>
+    <!-- display -->
+    <string name="section_display">画面与操作</string>
+    <string name="refresh_rate">刷新率（Hz）</string>
+    <string name="refresh_auto">自动 ★</string>
+    <string name="refresh_hint">推荐「自动」：实测最顺。固定 24/30/60 会让手机少渲染、更省电，但在车机上可能出现不均匀的顿挫。改动会立即重建车机画面。</string>
+    <string name="swipe_step">滑动灵敏度：每 %1$d 像素 = 一次方向键</string>
+    <string name="swipe_step_hint">在车机屏幕上滑动来移动选择框。数字越小越灵敏。</string>
+    <string name="pre_raster">离屏预渲染（更流畅，更占内存）</string>
+    <string name="keep_awake">投屏时保持手机唤醒</string>
+    <string name="keep_awake_hint">关闭后手机锁屏，车机画面会冻结（声音照常）。</string>
+
+    <!-- advanced -->
+    <string name="section_advanced">高级</string>
+    <string name="custom_ua_hint">自定义 User-Agent</string>
+    <string name="inject_js_hint">注入 JS</string>
+    <string name="inject_js_help">每次页面加载后在车机网页里执行，点右侧 ✓ 立即生效。留空 = 不注入。</string>
+    <string name="adb_title">用 adb 调参数</string>
+    <string name="apply">应用</string>
+    <string name="applied">已应用</string>
+    <string name="reset_defaults">恢复全部默认设置</string>
+    <string name="reset_confirm">所有参数恢复默认值（不影响登录和 Cookie）。</string>
+    <string name="reset_done">已恢复默认设置</string>
+
+    <!-- car action strip -->
+    <string name="action_remote">遥控</string>
     <string name="action_back">返回</string>
     <string name="action_home">主页</string>
     <string name="action_reload">刷新</string>

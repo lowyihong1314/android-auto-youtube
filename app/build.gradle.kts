@@ -76,6 +76,10 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
+            // Lets a debug build sit next to the Play install instead of clashing
+            // with its signature. Android Auto only runs the Play one in a real car;
+            // the debug one is for the phone screen and the DHU.
+            applicationIdSuffix = ".debug"
         }
         release {
             // Left off on purpose: R8 would need extra keep rules for the
@@ -115,4 +119,7 @@ dependencies {
     // ComponentActivity -> OnBackPressedDispatcher. Apps targeting SDK 36 get
     // predictive back, where Activity.onBackPressed() is never called.
     implementation("androidx.activity:activity-ktx:1.13.0")
+
+    // Phone-side settings screen: cards, sliders, switches, toggle groups.
+    implementation("com.google.android.material:material:1.12.0")
 }

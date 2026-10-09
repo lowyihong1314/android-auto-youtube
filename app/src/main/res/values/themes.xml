@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Phone-side launcher activity only. The car screen never uses this. -->
-    <style name="Theme.CarVideo.Phone" parent="@android:style/Theme.DeviceDefault.Light.NoActionBar" />
+    <!-- Phone-side activities only. The car screen never uses this. -->
+    <style name="Theme.CarVideo.Phone" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand</item>
+    </style>
 </resources>
